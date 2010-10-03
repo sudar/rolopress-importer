@@ -12,13 +12,8 @@ Text Domain: rolopress-importer
 2010-10-02 - v0.1 - Initial Release
 
 Based on CSV Importer WordPress Plugin (http://wordpress.org/extend/plugins/csv-importer/) by Denis Kobozev
+also uses code from http://code.google.com/p/php-csv-parser/
 */
-
-/**
- * TODOs
- * 1) Proper i18n
- * 2) Move menu from settings
- */
 
 /**
  * LICENSE: The MIT License {{{
@@ -49,9 +44,13 @@ Based on CSV Importer WordPress Plugin (http://wordpress.org/extend/plugins/csv-
  * }}}
  */
 
+/**
+ * RoloPress CSV Importer class
+ *
+ */
 class RoloPressCSVImporter {
 
-    var $log = array();
+    var $log = array(); // for outputing error messages
 
     /**
      * Initalize the plugin by registering the hooks
@@ -63,9 +62,7 @@ class RoloPressCSVImporter {
 
         // Register hooks
 
-        // Settings hooks
-        add_action( 'admin_menu', array(&$this, 'register_settings_page') );
-
+        add_action( 'admin_menu', array(&$this, 'register_settings_page') );        // Settings hooks
     }
 
     /**
@@ -88,14 +85,15 @@ class RoloPressCSVImporter {
 ?>
 
 <div class="wrap">
-    <h2>Import CSV</h2>
+    <h2><?php _e('RoloPress Importer', 'rolopress-importer'); ?></h2>
+    <p><?php _e('You can import contacts into RoloPress which were exproted as .csv files from other places like Google Contacts or Outlook. Select the file and then click the import button to import contacts.', 'rolopress-importer'); ?></p>
     <form class="add:the-list: validate" method="post" enctype="multipart/form-data">
         <!-- File input -->
         <p>
-            <label for="rp-csv-import-file">Upload file:</label><br/>
+            <label for="rp-csv-import-file"><?php _e('CSV file', 'rolopress-importer'); ?>: </label>
             <input name="rp-csv-import-file" id="rp-csv-import-file" type="file" value="" aria-required="true" />
         </p>
-        <p class="submit"><input type="submit" class="button" name="rp-csv-import-button" value="Import" /></p>
+        <p class="submit"><input type="submit" class="button" name="rp-csv-import-button" value="<?php _e('Import', 'rolopress-importer');?>" /></p>
     </form>
 </div><!-- end wrap -->
 
@@ -152,13 +150,12 @@ class RoloPressCSVImporter {
      */
     function import() {
         if (empty($_FILES['rp-csv-import-file']['tmp_name'])) {
-            $this->log['error'][] = 'No file uploaded, aborting.';
+            $this->log['error'][] = __('No file uploaded, aborting.', 'rolopress-importer');
             $this->print_messages();
             return;
         }
 
-        //TODO: Using proper Plugin path
-        require_once 'File_CSV_DataSource/DataSource.php';
+        require_once plugin_dir_path(__FILE__). 'File_CSV_DataSource/DataSource.php';
 
         $time_start = microtime(true);
 
@@ -167,7 +164,7 @@ class RoloPressCSVImporter {
         $this->stripBOM($file);
 
         if (!$csv->load($file)) {
-            $this->log['error'][] = 'Failed to load file, aborting.';
+            $this->log['error'][] = __('Failed to load file, aborting.', 'rolopress-importer');
             $this->print_messages();
             return;
         }
@@ -193,9 +190,9 @@ class RoloPressCSVImporter {
         $exec_time = microtime(true) - $time_start;
 
         if ($skipped) {
-            $this->log['notice'][] = "<b>Skipped {$skipped} contacts (most likely due to empty title, body and excerpt).</b>";
+            $this->log['notice'][] = '<b>' . sprintf(_n('Skipped %d contact', 'Skipped %d contacts', $skipped, 'rolopress-importer'), $skipped) .  __('most likely due to empty title, body and excerpt).', 'rolopress-importer') . '</b>';
         }
-        $this->log['notice'][] = sprintf("<b>Imported {$imported} contacts in %.2f seconds.</b>", $exec_time);
+        $this->log['notice'][] = '<b>' . sprintf(_n("Imported %d contact in %.2f seconds." , "Imported %d contacts in %.2f seconds.", $imported, 'rolopress-importer'), $imported, $exec_time);
         $this->print_messages();
     }
 
@@ -392,7 +389,8 @@ class RoloPressCSVImporter {
 
             return $contact_id;
         } else {
-            //TODO: Handle error
+            //some problem in importing the contact
+            $this->log['error'][] = __('Failed to insert the contact into DB.', 'rolopress-importer');
         }
     }
 
@@ -405,23 +403,23 @@ class RoloPressCSVImporter {
         if (false !== $res) {
             $bytes = fread($res, 3);
             if ($bytes == pack('CCC', 0xef, 0xbb, 0xbf)) {
-                $this->log['notice'][] = 'Getting rid of byte order mark...';
+                $this->log['notice'][] = __('Getting rid of byte order mark...', 'rolopress-importer');
                 fclose($res);
 
                 $contents = file_get_contents($fname);
                 if (false === $contents) {
-                    trigger_error('Failed to get file contents.', E_USER_WARNING);
+                    trigger_error(__('Failed to get file contents.', 'rolopress-importer'), E_USER_WARNING);
                 }
                 $contents = substr($contents, 3);
                 $success = file_put_contents($fname, $contents);
                 if (false === $success) {
-                    trigger_error('Failed to put file contents.', E_USER_WARNING);
+                    trigger_error(__('Failed to put file contents.', 'rolopress-importer'), E_USER_WARNING);
                 }
             } else {
                 fclose($res);
             }
         } else {
-            $this->log['error'][] = 'Failed to open file, aborting.';
+            $this->log['error'][] = __('Failed to open file, aborting.', 'rolopress-importer');
         }
     }
 
