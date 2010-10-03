@@ -72,7 +72,7 @@ class RoloPressCSVImporter {
      * Register the settings page
      */
     function register_settings_page() {
-        add_options_page( __('RoloPress Importer', 'rolopress-importer'), __('RoloPress Importer', 'rolopress-importer'), 8, 'rolopress-importer', array(&$this, 'settings_page') );
+        add_management_page( __('RoloPress Importer', 'rolopress-importer'), __('RoloPress Importer', 'rolopress-importer'), 8, 'rolopress-importer', array(&$this, 'settings_page') );
     }
 
     /**
