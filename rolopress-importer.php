@@ -325,6 +325,10 @@ class RoloPressCSVImporter {
                     $new_contact['rolo_contact_zip'] = $value;
                     break;
 
+                case "Twitter":
+                    $new_contact['rolo_contact_twitter'] = $value;
+                    break;
+
                 default:
                     break;
             }
