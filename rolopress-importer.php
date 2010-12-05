@@ -3,13 +3,14 @@
 Plugin Name: RoloPress Importer
 Plugin URI: http://sudarmuthu.com/wordpress/rolopress-importer
 Description: Import contacts into RoloPress.
-Version: 0.1
+Version: 0.2
 Author: Sudar
 Author URI: http://sudarmuthu.com/
 Text Domain: rolopress-importer
 
 === RELEASE NOTES ===
 2010-10-02 - v0.1 - Initial Release
+2010-12-05 - v0.2 - Added support for categories
 
 Based on CSV Importer WordPress Plugin (http://wordpress.org/extend/plugins/csv-importer/) by Denis Kobozev
 also uses code from http://code.google.com/p/php-csv-parser/
@@ -93,6 +94,16 @@ class RoloPressCSVImporter {
             <label for="rp-csv-import-file"><?php _e('CSV file', 'rolopress-importer'); ?>: </label>
             <input name="rp-csv-import-file" id="rp-csv-import-file" type="file" value="" aria-required="true" />
         </p>
+
+        <!-- Parent category -->
+        <p>
+            <?php _e('Import into category ', 'rolopress-importer');
+            wp_dropdown_categories(array('show_option_all' => __('Select one ...', 'rolopress-importer'), 'hide_empty' => 0, 'hierarchical' => 1, 'show_count' => 0, 'name' => 'rolo_importer_cat', 'orderby' => 'name', 'selected' => $opt_cat));
+            ?>
+            <br>
+            <small><?php _e('All contacts will be imported to this categories.', 'rolopress-importer');?></small>
+        </p>
+
         <p class="submit"><input type="submit" class="button" name="rp-csv-import-button" value="<?php _e('Import', 'rolopress-importer');?>" /></p>
     </form>
 </div><!-- end wrap -->
@@ -343,6 +354,11 @@ class RoloPressCSVImporter {
 
         $new_post['post_type'] = 'post';
         $new_post['post_status'] = 'publish';
+
+        // if category is set, then import contacts to that category
+        if ($_POST['rolo_importer_cat'] != 0) {
+            $new_post['post_category'] = $_POST['rolo_importer_cat'];
+        }
 
         $contact_id = wp_insert_post($new_post);
 

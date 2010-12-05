@@ -1,35 +1,20 @@
 === RoloPress Importer ===
 Contributors: sudar
 Requires at least: 2.9
-Tested up to: 3.0.1
-Stable tag: 0.1
+Tested up to: 3.0.2
+Stable tag: 0.2
 Tags: csv, import, batch, spreadsheet, excel
 
 Import contacts from CSV files into WordPress.
 
-
 == Description ==
 
-This plugin imports posts from CSV (Comma Separated Value) files into your
-WordPress blog. It can prove extremely useful when you want to import a bunch
-of posts from an Excel document or the like - simply export your document into
-a CSV file and the plugin will take care of the rest.
-
-= Features =
-
-*   Imports post title, body, excerpt, tags, date, categories etc.
-*   Supports custom fields, custom taxonomies and comments
-*   Deals with Word-style quotes and other non-standard characters using
-    WordPress' built-in mechanism (same one that normalizes your input when you
-    write your posts)
-*   Columns in the CSV file can be in any order, provided that they have correct
-    headings
-
+This plugin imports contacts from CSV (Comma Separated Value) files into your RoloPress installation.
+It can prove extremely useful when you want to import a bunch of contacts from othe programs like outlook or gmail.
 
 == Screenshots ==
 
 1.  Plugin's interface
-
 
 == Installation ==
 
@@ -39,13 +24,6 @@ Installing the plugin:
 1.  Activate the plugin through the 'Plugins' menu in WordPress.
 1.  The plugin will be available under Tools -> RoloPress Importer on
     WordPress administration page.
-
-
-== Usage ==
-
-
-== Frequently Asked Questions ==
-
 
 == Credits ==
 
@@ -60,6 +38,11 @@ This plugin uses [php-csv-parser][3] by Kazuyoshi Tlacaelel and is also based on
 
 *   first version
 
+###v0.2 (2010-12-05)
+
+*   Added support for categories
+
 ==Readme Generator==
 
-This Readme file was generated using <a href = 'http://sudarmuthu.com/wordpress/wp-readme'>wp-readme</a>, which generates readme files for WordPress Plugins.
+This Readme file was generated using [wp-readme][5], which generates readme files for WordPress Plugins.
+[5]: http://sudarmuthu.com/wordpress/wp-readme
