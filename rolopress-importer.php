@@ -3,7 +3,7 @@
 Plugin Name: RoloPress Importer
 Plugin URI: http://sudarmuthu.com/wordpress/rolopress-importer
 Description: Import contacts into RoloPress.
-Version: 0.2
+Version: 0.3
 Author: Sudar
 Author URI: http://sudarmuthu.com/
 Text Domain: rolopress-importer
@@ -11,6 +11,7 @@ Text Domain: rolopress-importer
 === RELEASE NOTES ===
 2010-10-02 - v0.1 - Initial Release
 2010-12-05 - v0.2 - Added support for categories
+2011-01-15 - v0.3 - Added support for importing companies alone
 
 Based on CSV Importer WordPress Plugin (http://wordpress.org/extend/plugins/csv-importer/) by Denis Kobozev
 also uses code from http://code.google.com/p/php-csv-parser/
@@ -345,47 +346,83 @@ class RoloPressCSVImporter {
             }
         }
 
-        $new_post = array();
+        if (isset($new_contact['rolo_contact_last_name']) || isset($new_contact['rolo_contact_last_name'])) {
 
-        $new_post['post_title'] = $new_contact['rolo_contact_first_name'];
-        if (isset($new_contact['rolo_contact_last_name'])) {
-            $new_post['post_title'] .= ' ' . $new_contact['rolo_contact_last_name'];
-        }
+            $new_post = array();
 
-        $new_post['post_type'] = 'post';
-        $new_post['post_status'] = 'publish';
+            $new_post['post_title'] = $new_contact['rolo_contact_first_name'];
+            if (isset($new_contact['rolo_contact_last_name'])) {
+                $new_post['post_title'] .= ' ' . $new_contact['rolo_contact_last_name'];
+            }
 
-        // if category is set, then import contacts to that category
-        if ($_POST['rolo_importer_cat'] != 0) {
-            $new_post['post_category'] = $_POST['rolo_importer_cat'];
-        }
+            $new_post['post_type'] = 'post';
+            $new_post['post_status'] = 'publish';
 
-        $contact_id = wp_insert_post($new_post);
+            // if category is set, then import contacts to that category
+            if ($_POST['rolo_importer_cat'] != 0) {
+                $new_post['post_category'] = $_POST['rolo_importer_cat'];
+            }
 
-        if ($contact_id != '') {
+            $contact_id = wp_insert_post($new_post);
 
-            // Store only first name and last name as seperate custom fields
-            update_post_meta($contact_id, 'rolo_contact_first_name', $new_contact['rolo_contact_first_name']);
-            update_post_meta($contact_id, 'rolo_contact_last_name', $new_contact['rolo_contact_last_name']);
+            if ($contact_id != '') {
 
-            // store the rest as custom taxonomies
-            wp_set_post_terms($contact_id, ($new_contact['rolo_contact_city'] == 'City') ? '' : $new_contact['rolo_contact_city'], 'city');
-            wp_set_post_terms($contact_id, ($new_contact['rolo_contact_state'] == 'State') ? '' : $new_contact['rolo_contact_state'], 'state');
-            wp_set_post_terms($contact_id, ($new_contact['rolo_contact_zip'] == 'Zip') ? '' : $new_contact['rolo_contact_zip'], 'zip');
-            wp_set_post_terms($contact_id, ($new_contact['rolo_contact_country'] == 'Country') ? '' : $new_contact['rolo_contact_country'], 'country');
+                // Store only first name and last name as seperate custom fields
+                update_post_meta($contact_id, 'rolo_contact_first_name', $new_contact['rolo_contact_first_name']);
+                update_post_meta($contact_id, 'rolo_contact_last_name', $new_contact['rolo_contact_last_name']);
 
-            // store the array as post meta
-            update_post_meta($contact_id, 'rolo_contact' , $new_contact);
+                // store the rest as custom taxonomies
+                wp_set_post_terms($contact_id, ($new_contact['rolo_contact_city'] == 'City') ? '' : $new_contact['rolo_contact_city'], 'city');
+                wp_set_post_terms($contact_id, ($new_contact['rolo_contact_state'] == 'State') ? '' : $new_contact['rolo_contact_state'], 'state');
+                wp_set_post_terms($contact_id, ($new_contact['rolo_contact_zip'] == 'Zip') ? '' : $new_contact['rolo_contact_zip'], 'zip');
+                wp_set_post_terms($contact_id, ($new_contact['rolo_contact_country'] == 'Country') ? '' : $new_contact['rolo_contact_country'], 'country');
 
-            // Set the custom taxonmy for the post
-            wp_set_post_terms($contact_id, 'Contact', 'type');
+                // store the array as post meta
+                update_post_meta($contact_id, 'rolo_contact' , $new_contact);
+
+                // Set the custom taxonmy for the post
+                wp_set_post_terms($contact_id, 'Contact', 'type');
 
 
+                $company_name = $new_contact['rolo_contact_company'];
+
+                if ($company_name != '') {
+                   // Set the custom taxonmy for the post
+                    wp_set_post_terms($contact_id, $company_name, 'company');
+
+                    $company_id = get_post_by_title(stripslashes($company_name));
+                    if (!$company_id) {
+                        // create an empty post for company
+                        $new_post = array();
+
+                        $new_post['post_title'] = $company_name;
+                        $new_post['post_type'] = 'post';
+                        $new_post['post_status'] = 'publish';
+
+                        $company_id = wp_insert_post($new_post);
+
+                        // Store only company name as seperate custom field
+                        update_post_meta($company_id, 'rolo_company_name', $company_name);
+
+                        $new_company = array();
+                        $new_company['rolo_company_name'] = $company_name;
+                        update_post_meta($company_id, 'rolo_company', $new_company);
+
+                        // Set the custom taxonmy for the post
+                        wp_set_post_terms($company_id, 'Company', 'type');
+                        wp_set_post_terms($company_id, $company_name, 'company');
+                    }
+                }
+
+                return $contact_id;
+            } else {
+                //some problem in importing the contact
+                $this->log['error'][] = __('Failed to insert the contact into DB.', 'rolopress-importer');
+            }
+        } else {
             $company_name = $new_contact['rolo_contact_company'];
 
             if ($company_name != '') {
-               // Set the custom taxonmy for the post
-                wp_set_post_terms($contact_id, $company_name, 'company');
 
                 $company_id = get_post_by_title(stripslashes($company_name));
                 if (!$company_id) {
@@ -410,11 +447,6 @@ class RoloPressCSVImporter {
                     wp_set_post_terms($company_id, $company_name, 'company');
                 }
             }
-
-            return $contact_id;
-        } else {
-            //some problem in importing the contact
-            $this->log['error'][] = __('Failed to insert the contact into DB.', 'rolopress-importer');
         }
     }
 
